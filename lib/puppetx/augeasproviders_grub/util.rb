@@ -147,7 +147,7 @@ module PuppetX
 
         # Exclude the '/boot/efi/EFI/#{os_name.downcase}/grub.cfg' for RedHat 9 and newer.
         os = Facter.value(:os)
-        if os.is_a?(Hash) && os['family'] == 'RedHat' && os['release']['major'].to_i > 9
+        if os.is_a?(Hash) && os['family'] == 'RedHat' && os['release']['major'].to_i >= 9
           paths.delete("/boot/efi/EFI/#{os_name.downcase}/grub.cfg")
         end
 
