@@ -145,17 +145,21 @@ module PuppetX
           '/boot/grub/grub.cfg'
         ]
 
-        # Exclude the '/boot/efi/EFI/#{os_name.downcase}/grub.cfg' for RedHat 9 and newer.
-        os = Facter.value(:os)
-        if os.is_a?(Hash) && os['family'] == 'RedHat' && os['release']['major'].to_i >= 9
-          paths.delete("/boot/efi/EFI/#{os_name.downcase}/grub.cfg")
-        end
-
         valid_paths = paths.map do |path|
-          real_path = File.realpath(path)
-          real_path if File.readable?(real_path) && !File.directory?(real_path)
-        rescue Errno::ENOENT
-          nil
+          real_path = nil
+          if File.readable?(path) && !File.directory?(path)
+            real_path = File.realpath(path)
+
+            # Exclude stub files which include main config
+            File.foreach(real_path) do |line|
+              if line.match(/^configfile\s/)
+                real_path = nil
+                break
+              end
+            end
+
+          end
+          real_path
         end.compact.uniq
 
         raise(%(No grub configuration found at '#{paths.join("', '")}')) if valid_paths.empty?
